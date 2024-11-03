@@ -1,11 +1,9 @@
-require 'globals'
-
--- TODO: 
+-- a naive signal implementation with eager evaluation
 
 local valueIndex = {}
 local subscriberIndex = {}
 
-Signal = {}
+local Signal = {}
 
 setmetatable(Signal, {
   __tostring = function(t)
@@ -65,7 +63,7 @@ Signal.derive   = function(signals, fn)
 
   for i, signal in ipairs(signals) do
     signal:onChange(function(newValue)
-      values[i] = newValue  -- Update the value at the correct index
+      values[i] = newValue -- Update the value at the correct index
       o:set(fn(unpack(values)))
     end)
   end
@@ -79,9 +77,9 @@ Signal.onChange = function(self, cb)
 end
 
 function Signal.ap(self, fnSignal)
-    return Signal.derive({self, fnSignal}, function(a, fn)
-      return fn(a)
-    end)
+  return Signal.derive({ self, fnSignal }, function(a, fn)
+    return fn(a)
+  end)
 end
 
 function Signal.flatMap(self, fn)

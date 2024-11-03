@@ -1,3 +1,5 @@
+-- string helpers
+
 local str = {}
 
 function str.split(inputstr, sep)

@@ -1,14 +1,14 @@
-local RefSet = require 'std.lib.ref_set'
+local Set = require 'std.lib.set'
 
 ---@class World
----@field entities RefSet
----@field systems RefSet
-World = {}
+---@field entities Set
+---@field systems Set
+local World = {}
 
 World.create = function()
   local o = {
-    entities = RefSet(),
-    systems = RefSet()
+    entities = Set(),
+    systems = Set()
   }
 
   setmetatable(o, { __index = World })
@@ -37,3 +37,5 @@ end
 function World.size(self)
   return self.entities:size() + self.systems:size()
 end
+
+return World

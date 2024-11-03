@@ -1,4 +1,6 @@
-IDGenerator = function()
+-- a generator to create incrementing IDs
+
+local createGenerator = function()
   local nextID = 1
   return function()
     local id = nextID
@@ -7,4 +9,4 @@ IDGenerator = function()
   end
 end
 
-return IDGenerator
+return createGenerator

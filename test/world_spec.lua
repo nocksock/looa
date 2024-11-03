@@ -1,5 +1,5 @@
-require 'globals'
-require 'lib.world'
+local Entity = require 'std.ecs.entities'
+local World = require 'std.ecs.world'
 
 describe('World', function()
   it('', function()

@@ -1,10 +1,10 @@
-require 'std.ref_set'
+-- WIP: a naive signal implementation with lazy evaluation
 
--- A lazy signal implementation.
+local set = require 'std.lib.set'
 
 local valueIndex = {}
-local subscriberIndex = RefSet()
-local dirtySignals = RefSet()
+local subscriberIndex = set()
+local dirtySignals = set()
 
 LazySignal = {}
 
@@ -16,7 +16,7 @@ setmetatable(LazySignal, {
     local o = {}
     valueIndex[o] = value
     subscriberIndex[o] = {}
-    dirtySignals = RefSet()
+    dirtySignals = set()
     setmetatable(o, { __index = LazySignal })
     return o
   end
@@ -25,7 +25,7 @@ setmetatable(LazySignal, {
 LazySignal_update   = function(self, newValue)
   local oldValue = valueIndex[self]
   valueIndex[self] = newValue
-  P({oldValue, newValue})
+  P({ oldValue, newValue })
   if newValue ~= oldValue then
     for _, cb in pairs(subscriberIndex[self]) do
       cb(newValue, oldValue)

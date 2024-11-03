@@ -1,4 +1,6 @@
---- RefSet datastructure
+-- reference set implementation with read cache
+--
+-- TODO: lazy evaluation
 
 if not table.unpack then table.unpack = unpack end
 
@@ -7,8 +9,8 @@ local sizeIndex = {} -- FIXME: I think I no longer need to track it this way wit
 local cachedOps = {}
 local dirtyOps = {}
 
----@class RefSet
-local RefSet = { skipCache = false }
+---@class Set
+local Set = { skipCache = false }
 
 local hash = function(...)
   local p = {}
@@ -17,12 +19,12 @@ local hash = function(...)
 end
 
 
-RefSet.of = function(...)
+Set.of = function(...)
   local o = {}
   setIndex[o] = {}
   sizeIndex[o] = 0
   setmetatable(o, {
-    __index = RefSet
+    __index = Set
   })
   o:add(...)
   return o
@@ -31,7 +33,7 @@ end
 local function check(method, ...)
   local key = hash(method, ...)
 
-  if not RefSet.skipCache and cachedOps[key] and not dirtyOps[key] then
+  if not Set.skipCache and cachedOps[key] and not dirtyOps[key] then
     return cachedOps[key]
   end
 
@@ -57,13 +59,13 @@ local invalidate = function(set)
   return set
 end
 
-setmetatable(RefSet, {
+setmetatable(Set, {
   __call = function(_, ...)
-    return RefSet.of(...)
+    return Set.of(...)
   end
 })
 
-RefSet.add = function(self, ...)
+Set.add = function(self, ...)
   for _, item in ipairs({ ... }) do
     if not setIndex[self][item] then
       setIndex[self][item] = item
@@ -74,7 +76,7 @@ RefSet.add = function(self, ...)
   return invalidate(self)
 end
 
-RefSet.has = function(self, item, ...)
+Set.has = function(self, item, ...)
   local cached, key = check("has", self, item, ...)
   if cached then return cached end
   local more = { ... }
@@ -91,9 +93,9 @@ RefSet.has = function(self, item, ...)
 end
 
 ---alias of RefSet.has
-RefSet.member = RefSet.has
+Set.member = Set.has
 
-RefSet.clear = function(self)
+Set.clear = function(self)
   for index, _ in ipairs(setIndex[self]) do
     setIndex[self][index] = nil
   end
@@ -101,13 +103,13 @@ RefSet.clear = function(self)
   return invalidate(self)
 end
 
-RefSet.set = function(self, ...)
+Set.set = function(self, ...)
   self:clear()
   self:add(...)
   return invalidate(self)
 end
 
-RefSet.hasSome = function(self, ...)
+Set.hasSome = function(self, ...)
   local cached, key = check("hasSome", self, ...)
   if cached then return cached end
   local more = { ... }
@@ -123,7 +125,7 @@ RefSet.hasSome = function(self, ...)
   return cache(key, false)
 end
 
-RefSet.remove = function(self, ...)
+Set.remove = function(self, ...)
   for _, item in ipairs({ ... }) do
     if setIndex[self][item] then
       sizeIndex[self] = sizeIndex[self] - 1
@@ -134,7 +136,7 @@ RefSet.remove = function(self, ...)
   return invalidate(self)
 end
 
-RefSet.toggle = function(self, ...)
+Set.toggle = function(self, ...)
   for _, item in ipairs({ ... }) do
     if setIndex[self][item] then
       self:remove(item)
@@ -148,7 +150,7 @@ end
 
 ---returns a table with entries. *DO NOT MUTATE ENTRIES* return value is cached
 ---use :copy():entries() instead.
-RefSet.entries = function(self)
+Set.entries = function(self)
   local cached, key = check("entries", self)
   if cached then return cached end
 
@@ -160,11 +162,11 @@ RefSet.entries = function(self)
   return cache(key, entries)
 end
 
-RefSet.copy = function(self)
-  return RefSet(table.unpack(self:entries()))
+Set.copy = function(self)
+  return Set(table.unpack(self:entries()))
 end
 
-RefSet.equals = function(self, otherset)
+Set.equals = function(self, otherset)
   local cached, key = check("equals", self, otherset)
   if cached then return cached end
 
@@ -176,7 +178,7 @@ RefSet.equals = function(self, otherset)
   return cache(key, true)
 end
 
-RefSet.union = function(self, ...)
+Set.union = function(self, ...)
   local cached, key = check("union", self, ...)
   if cached then return cached end
 
@@ -190,7 +192,7 @@ RefSet.union = function(self, ...)
   return cache(key, result)
 end
 
-RefSet.contains = function(self, ...)
+Set.contains = function(self, ...)
   local cached, key = check("contains", self, ...)
   if cached then return cached end
 
@@ -204,7 +206,7 @@ RefSet.contains = function(self, ...)
   return cache(key, true)
 end
 
-RefSet.intersection = function(self, ...)
+Set.intersection = function(self, ...)
   local cached, key = check("intersection", self, ...)
   if cached then return cached end
 
@@ -214,13 +216,13 @@ RefSet.intersection = function(self, ...)
   -- not caching these, as creating an empty refset is probably faster than
   -- hash+lookup
   -- TODO: verify this assumption
-  if self:size() == 0 then return RefSet() end
+  if self:size() == 0 then return Set() end
   for _, set in ipairs(sets) do
-    if set:size() == 0 then return RefSet() end
+    if set:size() == 0 then return Set() end
   end
 
   if #sets == 1 then
-    local result = RefSet()
+    local result = Set()
     local other = sets[1]
     for _, item in ipairs(self:entries()) do
       if other:has(item) then
@@ -239,7 +241,7 @@ RefSet.intersection = function(self, ...)
     end
   end
 
-  local result = RefSet()
+  local result = Set()
   for _, item in ipairs(smallest:entries()) do
     local in_all = true
     for _, set in ipairs(sets) do
@@ -256,20 +258,20 @@ RefSet.intersection = function(self, ...)
   return cache(key, result)
 end
 
-RefSet.isSubsetOf = function(self, other)
+Set.isSubsetOf = function(self, other)
   return other:contains(self)
 end
 
-RefSet.isSupersetOf = function(self, other)
+Set.isSupersetOf = function(self, other)
   return self:contains(other)
 end
 
 -- using a method instead of a field to keep the interface consistent
-RefSet.size = function(self)
+Set.size = function(self)
   return sizeIndex[self]
 end
 
-RefSet.each = function(self, fn)
+Set.each = function(self, fn)
   -- :entries is already cached()
   for _, item in ipairs(self:entries()) do
     fn(item)
@@ -278,11 +280,11 @@ RefSet.each = function(self, fn)
 end
 
 
-RefSet.flatMap = function(self, fn)
+Set.flatMap = function(self, fn)
   local cached, key = check("flatMap", self, fn)
   if cached then return cached end
 
-  local result = RefSet()
+  local result = Set()
   self:each(function(entry)
     local mapped = fn(entry)
     if not mapped then return end
@@ -294,7 +296,7 @@ RefSet.flatMap = function(self, fn)
   return cache(key, result)
 end
 
-RefSet.map = function(self, fn)
+Set.map = function(self, fn)
   local cached, key = check("map", self, fn)
   if cached then return cached end
 
@@ -304,10 +306,10 @@ RefSet.map = function(self, fn)
     results[i] = fn(entries[i])
   end
 
-  return cache(key, RefSet(table.unpack(results)))
+  return cache(key, Set(table.unpack(results)))
 end
 
-RefSet.filter = function(self, fn)
+Set.filter = function(self, fn)
   local cached, key = check("filter", self, fn)
   if cached then return cached end
 
@@ -320,7 +322,7 @@ RefSet.filter = function(self, fn)
       filtered[count] = entries[i]
     end
   end
-  return cache(key, RefSet(table.unpack(filtered)))
+  return cache(key, Set(table.unpack(filtered)))
 end
 
-return RefSet
+return Set

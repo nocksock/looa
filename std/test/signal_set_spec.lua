@@ -1,19 +1,21 @@
-require 'lib.signal'
-require 'lib.set'
+-- WIP
+
+local signal = require 'std.lib.signal'
+local set = require 'std.lib.set'
 local spy = require 'luassert.spy'
 
 -- NOTE: all write operations on the Set have to happen with signal:map, to retain reactivity
 
 local valueIndex = {}
 local signalIndex = {}
-SetSignal = { }
+SetSignal = {}
 
 setmetatable(SetSignal, {
   __call = function(_, ...)
     local o = {}
-    valueIndex[o] = Set(...)
-    signalIndex[o] = Signal(valueIndex[o])
-    setmetatable(o, { __index = SetSignal, __tostring = function (t) return "SetSignal: " .. I(t) end })
+    valueIndex[o] = set(...)
+    signalIndex[o] = signal(valueIndex[o])
+    setmetatable(o, { __index = SetSignal, __tostring = function(t) return "SetSignal: " .. I(t) end })
     return o
   end
 })
@@ -50,7 +52,7 @@ end
 
 function SetSignal.derive(source, cb)
   local value = SetSignal(cb(valueIndex[source]))
-  source:onChange(function(v)  end)
+  source:onChange(function(v) end)
   value.set = function(self, _) error("cannot write to a derived signal") end
   return value
 end
@@ -59,11 +61,10 @@ function SetSignal.filter(source, cb)
   -- TODO: implement filter so that relationships aren't lost.
   local sourceset = source._signal:get()
   local value = SetSignal(sourceset:filter(cb))
-  source:onChange(function(v) Signal.set(value, cb(v)) end)
+  source:onChange(function(v) signal.set(value, cb(v)) end)
   value.add = function(self, _) error("cannot write to a derived signal") end
   return value
 end
-
 
 -- function SignalSet.add(self, ...)
 -- end
@@ -74,17 +75,17 @@ describe('Signal Set', function()
       local x1 = { x = 1 }
       local x2 = { x = 2 }
       local x3 = { x = 3 }
-      local a = Signal(Set(x1, x2))
-      a:map(function(set) return set:add(x3) end)
-      assert(a:get():equals(Set(x1, x2, x3)))
+      local a = signal(set(x1, x2))
+      a:map(function(s) return s:add(x3) end)
+      assert(a:get():equals(set(x1, x2, x3)))
     end)
   end)
 end)
 
-describe('SetSignal', function ()
+describe('SetSignal', function()
   it('is a set that implements the signal interface and then some', function()
     local set = SetSignal(1, 2, 3)
-    local s = spy.new(function()  end)
+    local s = spy.new(function() end)
     assert(set:has(2))
     set:onChange(s)
     set:add(4)
@@ -106,7 +107,7 @@ describe('SetSignal', function ()
     it('sets the internal value', function()
       local a = SetSignal(1, 2, 3)
       a:set(4, 5, 6)
-      assert(a:get():equals(Set(4,5,6)))
+      assert(a:get():equals(set(4, 5, 6)))
     end)
   end)
 
@@ -122,5 +123,4 @@ describe('SetSignal', function ()
   --     assert(b:has(4))
   --   end)
   -- end)
-
 end)

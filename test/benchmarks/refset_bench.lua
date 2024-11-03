@@ -1,5 +1,6 @@
-local tu = require 'test.utils'
-local RefSet = require 'std.lib.ref_set'
+-- NOTE: outdated and broken. doesn't use the benchmark util
+local tu = require 'std.test.utils'
+local RefSet = require 'std.lib.set'
 
 local a
 local b
@@ -37,7 +38,7 @@ end
 
 print("skipCache = false")
 RefSet.skipCache = false
-tu.bench("skipCache = false", function ()
+tu.bench("skipCache = false", function()
   tu.trackTime("a", 1, benchmark_a)
   tu.trackTime("b", 1, benchmark_b)
 end)

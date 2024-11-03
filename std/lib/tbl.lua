@@ -1,3 +1,5 @@
+-- table helpers
+
 local tbl = {}
 
 function tbl.map(tbl, f)
@@ -26,12 +28,21 @@ function tbl.reduce(t, func, initial)
   return accumulator
 end
 
-function tbl.reduceRight(t, func, initial)
+function tbl:reduceRight(func, initial)
   local accumulator = initial
-  for i = #t, 1, -1 do
-    accumulator = func(accumulator, t[i])
+  for i = #self, 1, -1 do
+    accumulator = func(accumulator, self[i])
   end
   return accumulator
+end
+
+function tbl.has(t, item)
+  for i, v in ipairs(t) do
+    if v == item then
+      return true
+    end
+  end
+  return false
 end
 
 return tbl

@@ -1,4 +1,3 @@
-require 'globals'
 local b = {
   -- TODO: implement iterations and calculate means etc
   iterations = 1

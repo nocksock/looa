@@ -1,3 +1,5 @@
+-- function helpers
+
 local tbl = require('std.lib.table')
 
 local fns = {}

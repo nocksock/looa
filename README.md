@@ -11,6 +11,8 @@ The simplicity of Lua helps me focus on the core of those concepts while still p
 
 Feel free to point out implementation flaws in the form of PR, given the purpose is a better understanding of these fundamental datastructures.
 
+If you're looking for a more complete library, look at [batteries](https://github.com/1bardesign/batteries)
+
 ## Lua Version 5.1
 
-All lua code is testes against Lua 5.1 since I use some parts in my nvim config and Löve2D dabblings.
+All lua code is tested against Lua 5.1 since I use some parts in my nvim config and Löve2D dabblings.

@@ -1,11 +1,10 @@
-require 'globals'
-require 'std.lib.signal'
+local signal = require 'std.lib.signal'
 local spy = require 'luassert.spy'
 
 describe('Signal<Value>', function()
   describe(':set(Value) -> Signal', function()
     it('sets the value', function()
-      local value = Signal(10)
+      local value = signal(10)
       assert.same(10, value:get())
       value:set(20)
       assert.same(20, value:get())
@@ -14,21 +13,21 @@ describe('Signal<Value>', function()
 
   describe(':is(*) -> Boolean', function()
     it('checks if the parameter is a Signal', function()
-      local s = Signal(10)
-      assert(Signal.isSignal(s))
-      assert(not Signal.isSignal({}))
+      local s = signal(10)
+      assert(signal.isSignal(s))
+      assert(not signal.isSignal({}))
     end)
   end)
 
   describe(':update', function()
     it('sets the value by function', function()
-      local value = Signal(20)
+      local value = signal(20)
       local add = function(signal, b) return signal:get() + b end
       local s = spy.new(function() end)
       value:onChange(s)
       value:update(add, 10)
       assert.same(30, value:get())
-      Signal.update(value, add, 10) -- naturally can also be called like this
+      signal.update(value, add, 10) -- naturally can also be called like this
       assert.same(40, value:get())
       assert.spy(s).was.called(2)
     end)
@@ -36,7 +35,7 @@ describe('Signal<Value>', function()
 
   describe(':onChange(cb)', function()
     it("calls cb whenever the signal's value changes", function()
-      local value = Signal(10)
+      local value = signal(10)
       local s = spy.new(function() end)
       local unsub = value:onChange(s)
       assert.spy(s).was.called(0)
@@ -51,8 +50,8 @@ describe('Signal<Value>', function()
 
   describe('.derive(Signal | Signal[], fn: (Signal -> *)) -> Signal<*>', function()
     it('derives a signal', function()
-      local a = Signal(10)
-      local b = Signal.derive(a, function(v) return v * 2 end)
+      local a = signal(10)
+      local b = signal.derive(a, function(v) return v * 2 end)
 
       assert.same(20, b:get())
       a:set(20)
@@ -60,9 +59,9 @@ describe('Signal<Value>', function()
     end)
 
     it('can be derived again', function()
-      local a = Signal(20)
-      local b = Signal.derive(a, function(v) return v * 2 end)
-      local c = Signal.derive(b, function(v) return v - 10 end)
+      local a = signal(20)
+      local b = signal.derive(a, function(v) return v * 2 end)
+      local c = signal.derive(b, function(v) return v - 10 end)
 
       assert.same(30, c:get())
       a:set(30)
@@ -70,12 +69,12 @@ describe('Signal<Value>', function()
     end)
 
     it('can derive from multiple signals', function()
-      local a = Signal(10)
-      local b = Signal(20)
+      local a = signal(10)
+      local b = signal(20)
       local s = spy.new(function() end)
-      local c = Signal.derive({a, b}, s)
+      local c = signal.derive({ a, b }, s)
       assert.spy(s).called(1)
-      assert.spy(s).called_with(a:get(),b:get())
+      assert.spy(s).called_with(a:get(), b:get())
 
       a:set(10)
     end)
@@ -84,7 +83,7 @@ describe('Signal<Value>', function()
 
   describe(':call(fn, ...args)', function()
     it('calls a function with the internval value and returns the result', function()
-      local value = Signal(20)
+      local value = signal(20)
       local op = function(signal, operator, operand)
         if operator == "add" then
           return signal:get() + operand
@@ -98,8 +97,8 @@ describe('Signal<Value>', function()
 
   describe(":ap(Signal<Function>) -> Signal", function()
     it("applies the Signal<fn> to a Signal<value>", function()
-      local celsius = Signal(20)
-      local convertFn = Signal(function(c) return c * 9 / 5 + 32 end)
+      local celsius = signal(20)
+      local convertFn = signal(function(c) return c * 9 / 5 + 32 end)
 
       local fahrenheit = celsius:ap(convertFn)
       assert.equal(68, fahrenheit:get()) -- 20°C = 68°F

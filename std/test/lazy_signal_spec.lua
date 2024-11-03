@@ -1,4 +1,3 @@
-require 'globals'
 local Signal = require 'std.lib.lazy_signal'
 local spy = require 'luassert.spy'
 
@@ -65,9 +64,9 @@ describe('Signal<Value>', function()
       local a = Signal(10)
       local b = Signal(20)
       local s = spy.new(function() end)
-      local c = Signal.derive({a, b}, s)
+      local c = Signal.derive({ a, b }, s)
       assert.spy(s).called(1)
-      assert.spy(s).called_with(a:get(),b:get())
+      assert.spy(s).called_with(a:get(), b:get())
 
       a:set(10)
     end)

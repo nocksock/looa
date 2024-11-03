@@ -1,5 +1,5 @@
-local Entity = require 'lib.entities'
-local Component = require 'lib.components'
+local Entity = require 'std.ecs.entities'
+local Component = require 'std.ecs.components'
 
 describe('Components', function()
   describe('create', function()
